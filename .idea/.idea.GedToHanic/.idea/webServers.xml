@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="26af9ef0-1088-4ce4-86d4-c54a5e0daad0" name="\\erpdb" url="">
+        <fileTransfer mountedRoot="\\erpdb\FeneVision\MFiles\GEDtoHanic\bin\Staging" accessType="MOUNT" port="0" />
+      </webServer>
+    </option>
+  </component>
+</project>
