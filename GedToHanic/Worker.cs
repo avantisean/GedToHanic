@@ -121,7 +121,7 @@ public class Worker : BackgroundService
             if (ProcessFile(file, path))
             {
                 Debug.Assert(path.DonePath != null, "path.DoneDir != null");
-                File.Move(file, Path.Combine(path.DonePath, Path.GetFileName(file)));
+                File.Move(file, Path.Combine(path.DonePath, Path.GetFileName(file)), overwrite: true);
             }
         }
     }
@@ -163,6 +163,7 @@ public class Worker : BackgroundService
 
     private HanicLine MapGedLine(GedLine gedLine, string? orderNumber)
     {
+//        var newOrderNum = orderNumber?.Substring(0, 4) + orderNumber?.Substring(6, 4);
         var hanicLine = new HanicLine
         {
             ["B"] = orderNumber!,
@@ -172,21 +173,49 @@ public class Worker : BackgroundService
             ["G"] = gedLine["E"],
             ["H"] = gedLine["F"],
             ["J"] = gedLine["D"],
-            ["O"] = new[] { "1", "T" }.Contains(gedLine["S"]) ? "1" : "",
-            ["Q"] = "1"
+//            ["O"] = new[] { "1", "T" }.Contains(gedLine["S"]) ? "1" : ""
+            ["O"] = gedLine["R"] == "1-STD" ? "" : "1"
         };
+//        hanicLine["Q"] = hanicLine["O"];
+        hanicLine["Q"] = "1";
         var hanicShape = CalcHanicShape(gedLine);
         hanicLine["R"] = hanicShape;
-        if (new[] { "85", "74", "86", "76", "83", "75", "84" }.Contains(hanicShape))
+#if false
+        if ("81" == hanicShape)
+            hanicLine["AA"] = gedLine["W"];
+        else if (new[] { "83", "84" }.Contains(hanicShape))
         {
             hanicLine["AA"] = gedLine["V"];
             hanicLine["W"] = gedLine["W"];
         }
-        else
+        else if (new[] { "82", "85", "86" }.Contains(hanicShape))
+        {
+            hanicLine["AA"] = gedLine["V"];
+        }
+        else if (!string.IsNullOrEmpty(hanicShape))
             hanicLine["W"] = gedLine["V"];
-
-        if ("81" == hanicShape)
-            hanicLine["AA"] = gedLine["W"];
+#else
+        switch (hanicShape)
+        {
+            case "81":
+                hanicLine["AA"] = gedLine["W"];
+                break;
+            case "83":
+            case "84":
+                hanicLine["AA"] = gedLine["V"];
+                hanicLine["W"] = gedLine["W"];
+                break;
+            case "82":
+            case "85":
+            case "86":
+                hanicLine["AA"] = gedLine["V"];
+                break;
+            default:
+                if (!string.IsNullOrEmpty(hanicShape))
+                    hanicLine["W"] = gedLine["V"];
+                break;
+        }
+#endif
         return hanicLine;
     }
 
@@ -262,7 +291,7 @@ public class Worker : BackgroundService
                     continue;
                 }
 
-                var hanicLine = MapGedLine(gedLine, orderNumber: orderNumber);
+                var hanicLine = MapGedLine(gedLine, orderNumber: Path.GetFileNameWithoutExtension(inFileName));
                 hanicLines.Add(hanicLine);
             }
             reader.Dispose();
